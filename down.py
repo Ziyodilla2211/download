@@ -54,7 +54,7 @@ def download_video(url: str) -> str | None:
 # HELPER: Clean up video files after sending
 # ============================================================
 def cleanup():
-        for f in glob.glob(["video.*"]):
+        for f in glob.glob("video.*"):
             try:
                 os.remove(f)
             except:
