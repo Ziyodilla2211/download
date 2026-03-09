@@ -130,7 +130,17 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ============================================================
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text.strip()
-
+    
+    if "instagram.com" in user_text:
+        photos = download_instagram_photos(user_text)
+        if photos:
+            await update.message.reply_text("📤 Uploading photo(s)...")
+            for path in photos:
+                with open(path, "rb") as img:
+                    await update.message.reply_photo(photo=img)
+            cleanup()
+            return
+        
     if not is_url(user_text):
         await update.message.reply_text(
             "Please send a valid video URL starting with http:// or https://"
@@ -186,15 +196,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         cleanup()
 
-    if "instagram.com" in user_text:
-        photos = download_instagram_photos(user_text)
-        if photos:
-            await update.message.reply_text("📤 Uploading photo(s)...")
-            for path in photos:
-                with open(path, "rb") as img:
-                    await update.message.reply_photo(photo=img)
-            cleanup()
-            return
 
 
 # ============================================================
