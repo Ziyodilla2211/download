@@ -1,5 +1,4 @@
-import os                  # FIXED: was missing, needed for file operations
-import urllib.request
+import os
 import glob
 import yt_dlp
 from dotenv import load_dotenv
@@ -49,37 +48,13 @@ def download_video(url: str) -> str | None:
         print(f"Unexpected error: {e}")
         return None
 
-def download_instagram_photos(url: str) -> list[str]:
-    try:
-        with yt_dlp.YoutubeDL({'quiet': True, 'no_warnings': True}) as ydl:
-            info = ydl.extract_info(url, download=False)
-            entries = info.get('entries', [info])
-            downloaded = []
-            for i, entry in enumerate(entries):
-                if entry.get('duration') and entry['duration'] > 1:
-                    return []
-                thumbnails = entry.get('thumbnails', [])
-                if not thumbnails:
-                    continue
-                best = sorted(thumbnails, key=lambda t: t.get('width', 0) or 0, reverse=True)
-                photo_url = best[0].get('url')
-                if not photo_url:
-                    continue
-                filename = f"photo_{i+1}.jpg"
-                urllib.request.urlretrieve(photo_url, filename)
-                downloaded.append(filename)
-            return downloaded
-    except Exception as e:
-        print(f"Error: {e}")
-        return []
 
 
 # ============================================================
 # HELPER: Clean up video files after sending
 # ============================================================
 def cleanup():
-    for pattern in ["video.*", "photo_*.*"]:
-        for f in glob.glob(pattern):
+        for f in glob.glob(["video.*"]):
             try:
                 os.remove(f)
             except:
@@ -130,16 +105,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ============================================================
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text.strip()
-    
-    if "instagram.com" in user_text:
-        photos = download_instagram_photos(user_text)
-        if photos:
-            await update.message.reply_text("📤 Uploading photo(s)...")
-            for path in photos:
-                with open(path, "rb") as img:
-                    await update.message.reply_photo(photo=img)
-            cleanup()
-            return
         
     if not is_url(user_text):
         await update.message.reply_text(
