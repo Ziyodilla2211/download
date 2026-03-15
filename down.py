@@ -15,6 +15,8 @@ from telegram.ext import (
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
+COOKIE_FILE = "instagram_cookies.txt"
+
 
 # ============================================================
 # HELPER: Check if a string looks like a URL
@@ -32,7 +34,7 @@ def download_video(url: str, user_id: int) -> str | None:
 
     options = {
         'outtmpl': f'{filename_base}.%(ext)s',
-        'format': 'best[filesize<50M]/worst',
+        'format': 'best[filesize<100M]/worst',
         'quiet': True,
         'no_warnings': True,
         'no_color': True,
@@ -43,6 +45,8 @@ def download_video(url: str, user_id: int) -> str | None:
         'http_chunk_size': 10485760,  # 10MB chunks
     
     }
+    if os.path.exists(COOKIE_FILE):
+        options['cookiefile'] = COOKIE_FILE
 
     try:
         with yt_dlp.YoutubeDL(options) as ydl:
@@ -84,7 +88,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• Reddit\n"
         "• Vimeo\n"
         "• 1000+ other sites\n\n"
-        "Max file size: 50MB (Telegram limit)\n\n"
+        "Max file size: 100MB (Telegram limit)\n\n"
         "Send /help for more info."
     )
 
@@ -132,17 +136,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "• Private account or post\n"
             "• Link is expired or broken\n"
             "• Site is not supported\n"
-            "• File is too large (over 50MB)"
+            "• File is too large (over 100MB)"
         )
         cleanup(user_id)
         return
 
     file_size_mb = os.path.getsize(filename) / (1024 * 1024)
 
-    if file_size_mb > 50:
+    if file_size_mb > 100:
         await status_message.edit_text(
             f"❌ File is {file_size_mb:.1f}MB — too large.\n"
-            "Telegram bots can only send files up to 50MB."
+            "Telegram bots can only send files up to 100MB."
         )
         cleanup(user_id)
         return
@@ -186,6 +190,11 @@ def main():
         return
 
     print("Starting Video Downloader Bot...")
+
+    if os.path.exists(COOKIE_FILE):
+        print(f"✅ Cookie file found: {COOKIE_FILE}")
+    else:
+        print(f"⚠️  Warning: Cookie file not found: {COOKIE_FILE}")
 
     app = (
         Application.builder()
